@@ -18,6 +18,7 @@ mod sk_msg;
 mod sk_skb;
 mod sock_ops;
 mod socket_filter;
+mod struct_ops;
 mod tc;
 mod tracepoint;
 mod uprobe;
@@ -43,6 +44,7 @@ use sk_msg::SkMsg;
 use sk_skb::{SkSkb, SkSkbKind};
 use sock_ops::SockOps;
 use socket_filter::SocketFilter;
+use struct_ops::StructOps;
 use tc::SchedClassifier;
 use tracepoint::TracePoint;
 use uprobe::{UProbe, UProbeKind};
@@ -593,6 +595,24 @@ pub fn sk_lookup(attrs: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn cgroup_device(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match CgroupDevice::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
+    }
+    .into()
+}
+
+/// Marks a function as struct_ops eBPF program that allows user defined
+/// methods to be called by subsystems.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 5.6.
+///
+/// # Examples
+///
+#[proc_macro_attribute]
+pub fn struct_ops(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match StructOps::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
         Err(err) => err.emit_as_expr_tokens(),
     }

@@ -259,6 +259,9 @@ pub enum ProgramSection {
     SkSkbStreamVerdict,
     SockOps,
     SchedClassifier,
+    StructOps {
+        sleepable: bool,
+    },
     CgroupSkb,
     CgroupSkbIngress,
     CgroupSkbEgress,
@@ -349,6 +352,8 @@ impl FromStr for ProgramSection {
             }
             "sockops" => SockOps,
             "classifier" => SchedClassifier,
+            "struct_ops" => StructOps { sleepable: false },
+            "struct_ops.s" => StructOps { sleepable: true },
             "cgroup_skb" => {
                 let name = next()?;
                 match name {
@@ -2579,6 +2584,54 @@ mod tests {
             Some(Program {
                 section: ProgramSection::CgroupSockopt {
                     attach_type: CgroupSockoptAttachType::Get,
+                    ..
+                },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_struct_ops() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                EbpfSectionKind::Program,
+                "struct_ops/foo",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::StructOps { .. },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_struct_ops_sleepable() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                EbpfSectionKind::Program,
+                "struct_ops.s/foo",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::StructOps {
+                    sleepable: true,
                     ..
                 },
                 ..
