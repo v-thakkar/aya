@@ -25,7 +25,7 @@ use crate::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe,
         LircMode2, Lsm, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
-        SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint,
+        SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, StructOps, TracePoint,
         UProbe, Xdp,
     },
     sys::{
@@ -420,6 +420,7 @@ impl<'a> EbpfLoader<'a> {
                                 | ProgramSection::SkSkbStreamParser
                                 | ProgramSection::SkSkbStreamVerdict
                                 | ProgramSection::SockOps
+                                | ProgramSection::StructOps { sleepable: _ }
                                 | ProgramSection::SchedClassifier
                                 | ProgramSection::CgroupSkb
                                 | ProgramSection::CgroupSkbIngress
@@ -688,6 +689,14 @@ impl<'a> EbpfLoader<'a> {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
                             Program::Iter(Iter { data })
+                        }
+                        ProgramSection::StructOps { sleepable } => {
+                            let mut data =
+                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
+                            if *sleepable {
+                                data.flags = BPF_F_SLEEPABLE;
+                            }
+                            Program::StructOps(StructOps { data })
                         }
                     }
                 };
