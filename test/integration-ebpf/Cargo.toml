@@ -19,6 +19,7 @@ aya-log-ebpf = { path = "../../ebpf/aya-log-ebpf" }
 ebpf-panic = { path = "../../ebpf-panic" }
 integration-common = { path = "../integration-common" }
 network-types = { workspace = true }
+sched-ext-ops = { git = "https://github.com/vadorovsky/sched_ext_ops", branch = "static-global"}
 
 [build-dependencies]
 which = { workspace = true }
@@ -71,6 +72,10 @@ path = "src/simple_prog.rs"
 [[bin]]
 name = "strncmp"
 path = "src/strncmp.rs"
+
+[[bin]]
+name = "struct_ops"
+path = "src/struct_ops.rs"
 
 [[bin]]
 name = "tcx"
